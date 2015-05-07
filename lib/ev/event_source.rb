@@ -1,5 +1,5 @@
 module EV
-	class EventRoot
+	class EventSource
 		def self.new_from_events(events)
 			allocate.tap do |root|
 				root.initialize_from_events(events)

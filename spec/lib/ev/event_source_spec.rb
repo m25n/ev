@@ -1,15 +1,15 @@
 require 'spec_helper'
-require_relative '../../../lib/ev/event_root'
+require_relative '../../../lib/ev/event_source'
 
 module EV
-	class DummyModel < EventRoot
+	class DummyModel < EventSource
 		def handle(event)
 		end
 	end
 
-	describe EventRoot do
+	describe EventSource do
 		describe ".new_from_events" do
-			subject { EventRoot }
+			subject { EventSource }
 
 			it "does not call new" do
 				expect(subject).to_not receive(:new)
@@ -18,7 +18,7 @@ module EV
 
 			describe "with events" do
 				before do
-					root = EventRoot.new
+					root = EventSource.new
 					expect(root).to receive(:handle).twice
 					expect(subject).to receive(:allocate).and_return(root)
 				end
@@ -40,7 +40,7 @@ module EV
 		end
 
 		describe "#apply" do
-			subject { EventRoot.new }
+			subject { EventSource.new }
 			before do
 				@event = {foo: :bar}
 				expect(subject).to receive(:handle).with(@event)

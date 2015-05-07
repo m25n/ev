@@ -9,8 +9,8 @@ Gem::Specification.new do |s|
   s.authors     = ["Matthew Conger-Eldeen"]
   s.email       = ["mceldeen@gmail.com"]
   s.homepage    = "https://www.github.com/mceldeen/ev"
-  s.summary     = %q{A set of useful stuf for event sourcing.}
-  s.description = %q{A set of useful stuf for event sourcing.}
+  s.summary     = %q{A set of useful stuff for event sourcing.}
+  s.description = %q{A set of useful stuff for event sourcing.}
 
   s.add_development_dependency "rspec", "~>3.2"
 

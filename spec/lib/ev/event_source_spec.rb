@@ -1,113 +1,129 @@
 require 'spec_helper'
-require_relative '../../../lib/ev/event_source'
 
-module EV
-	class DummyModel < EventSource
-		def handle(event)
-		end
-	end
+class EventSourceExample < EV::EventSource
+  def add_event(event)
+    apply(event)
+  end
 
-	describe EventSource do
-		describe ".new_from_events" do
-			subject { EventSource }
+  protected
+  def handle(event)
+  end
+end
 
-			it "does not call new" do
-				expect(subject).to_not receive(:new)
-				subject.new_from_events([])
-			end
+RSpec.describe EventSourceExample do
+  describe '#changes' do
+    let(:events) { [1, 2] }
+    subject { described_class.new(events) }
 
-			describe "with events" do
-				before do
-					root = EventSource.new
-					expect(root).to receive(:handle).twice
-					expect(subject).to receive(:allocate).and_return(root)
-				end
+    context 'with events before initialization' do
+      it 'has no changes' do
+        expect(subject.changes).to eq([])
+      end
+    end
 
-				it "calls handle for each event" do
-					subject.new_from_events([1, 2])
-				end
+    context 'with an events before and after initialization' do
+      let(:new_events) { [3, 4] }
 
-				it "does not show changes" do
-					root = subject.new_from_events([1, 2])
-					expect(root.changes).to eq([])
-				end
+      before { new_events.each { |event| subject.add_event(event) } }
 
-				it "increments the verison number" do
-					root = subject.new_from_events([1, 2])
-					expect(root.version).to eq(2)
-				end
-			end
-		end
+      it 'has changes' do
+        expect(subject.changes).to eq(new_events)
+      end
+    end
+  end
 
-		describe "#apply" do
-			subject { EventSource.new }
-			before do
-				@event = {foo: :bar}
-				expect(subject).to receive(:handle).with(@event)
-			end
+  describe '#version' do
+    subject { described_class.new(events) }
 
-			it "calls handle" do
-				subject.send(:apply, @event)
-			end
+    context 'with no events at all' do
+      let(:events) { [] }
 
-			it "increments version" do
-				expect(subject.version).to eq(0)
-				subject.send(:apply, @event)
-				expect(subject.version).to eq(1)
-			end
+      it 'defaults to zero' do
+        expect(subject.version).to eq(0)
+      end
+    end
 
-			it "shows changes" do
-				expect(subject.changes).to eq([])
-				subject.send(:apply, @event)
-				expect(subject.changes).to eq([@event])
-			end
+    context 'with events before initialization' do
+      let(:events) { [1, 2] }
 
-			it "duplicates the changes list" do
-				subject.send(:apply, @event)
-				subject.changes.shift
-				expect(subject.changes.size).to eq(1)
-			end
-		end
+      it { expect(subject.version).to eq(events.count) }
+    end
 
-		describe "#initial_version" do
-			subject { DummyModel.new_from_events([1, 2])}
+    context 'with an events before and after initialization' do
+      let(:events) { [1, 2] }
+      let(:new_events) { [3, 4] }
 
-			it "works with no changes" do
-				expect(subject.initial_version).to eq(2)
-			end
+      before { new_events.each { |event| subject.add_event(event) } }
 
-			it "works with changes" do
-				subject.send(:apply, 3)
-				expect(subject.initial_version).to eq(2)
-			end
-		end
+      it { expect(subject.version).to eq(new_events.count + events.count) }
+    end
+  end
 
-		describe "#dirty?" do
-			subject { DummyModel.new_from_events([1,2]) }
+  describe '#initial_version' do
+    subject { described_class.new(events) }
 
-			it "works with no changes" do
-				expect(subject.dirty?).to eq(false)
-			end
+    context 'with no events at all' do
+      let(:events) { [] }
 
-			it "works with changes" do
-				subject.send(:apply, 3)
-				expect(subject.dirty?).to eq(true)
-			end
-		end
+      it { expect(subject.initial_version).to eq(0) }
+    end
 
-		describe "#commit" do
-			subject { DummyModel.new_from_events([1,2]) }
+    context 'with events before initialization' do
+      let(:events) { [1, 2] }
 
-			it "works with no changes" do
-				subject.commit
-				expect(subject.dirty?).to eq(false)
-			end
+      it { expect(subject.initial_version).to eq(events.count) }
+    end
 
-			it "works with changes" do
-				subject.send(:apply, 3)
-				subject.commit
-				expect(subject.dirty?).to eq(false)
-			end
-		end
-	end
+    context 'with an events before and after initialization' do
+      let(:events) { [1, 2] }
+      let(:new_events) { [3, 4] }
+
+      before { new_events.each { |event| subject.add_event(event) } }
+
+      it { expect(subject.initial_version).to eq(events.count) }
+    end
+  end
+
+  describe '#dirty?' do
+    subject { described_class.new(events) }
+
+    context 'no changes' do
+      let(:events) { [1, 2] }
+
+      it { expect(subject.dirty?).to eq(false) }
+    end
+
+    context 'with an events before and after initialization' do
+      let(:events) { [1, 2] }
+      let(:new_events) { [3, 4] }
+
+      before { new_events.each { |event| subject.add_event(event) } }
+
+      it { expect(subject.dirty?).to eq(true) }
+    end
+  end
+
+  describe '#commit' do
+    subject { described_class.new(events) }
+
+    context 'with no changes' do
+      let(:events) { [1, 2] }
+
+      before { subject.commit }
+
+      it { expect(subject.changes).to eq([]) }
+    end
+
+    context 'with an events before and after initialization' do
+      let(:events) { [1, 2] }
+      let(:new_events) { [3, 4] }
+
+      before do
+        new_events.each { |event| subject.add_event(event) }
+        subject.commit
+      end
+
+      it { expect(subject.changes).to eq([]) }
+    end
+  end
 end

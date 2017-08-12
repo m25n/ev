@@ -49,7 +49,7 @@ todo_list = nil
 
 debug do
 	puts "Initialization:"
-	todo_list = TodoList.new_from_events([ItemAdded.new("Buy a thing"), ItemAdded.new("Clean room")])
+	todo_list = TodoList.new([ItemAdded.new("Buy a thing"), ItemAdded.new("Clean room")])
 end
 
 debug do
